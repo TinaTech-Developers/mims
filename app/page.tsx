@@ -1,26 +1,46 @@
 "use client";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, ChangeEvent, FormEvent } from "react";
 
-const LoginPage = () => {
-  // Typing the state for email and password
+const LoginPage: React.FC = () => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const router = useRouter();
 
-  // Typing the handleSubmit function with FormEvent for the form submission
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Handle login logic here
-    console.log("Email:", email);
-    console.log("Password:", password);
+
+    try {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        // **Store the token after successful login**
+        localStorage.setItem("token", data.token);
+
+        if (data.role === "admin") {
+          router.push("/admin/home"); // Manager dashboard
+        } else {
+          router.push(`/manager?userId=${data.userId}`); // Admin dashboard
+        }
+      } else {
+        alert(data.message);
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      alert("Something went wrong. Please try again.");
+    }
   };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50">
       <div className="w-full max-w-md p-6 space-y-8 bg-white rounded-lg shadow-lg">
-        <h2 className="text-2xl font-bold text-center text-gray-800">
-          Login to your account
-        </h2>
+        <h2 className="text-4xl font-bold text-center text-[#003366]">MIMS</h2>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
           <div>
@@ -70,7 +90,7 @@ const LoginPage = () => {
               type="submit"
               className="w-full py-2 px-4 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
-              <Link href={"/home"}>Log In</Link>
+              Log In
             </button>
           </div>
 
